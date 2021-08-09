@@ -31,7 +31,6 @@ PointLightSource pointLightSource = PointLightSource(
 );
 
 
-
 // Texture enumerator
 enum textures {
 	GreenMetal = 0, BlueMetal = 1, Gold = 2,
@@ -121,7 +120,9 @@ float rootJungtingz = 0.0f;
 float angleJungtingx = 0.0f;
 float angleJungtingz = 0.0f;
 float angleJungtingy = 0.0f;
-bool isMoving = false;
+bool isMovingBackward = false;
+bool isMovingForward = false;
+
 #pragma endregion
 
 bool isShadow = true;
@@ -715,6 +716,58 @@ void processInput(GLFWwindow* window)
 			break;
 		case AlecModel:
 			rootAlecz -= 0.01f;
+			break;
+
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+	{
+		isMovingBackward = !isMovingBackward;
+	}
+
+	if (isMovingBackward) {
+		switch (currentModel) {
+		case JungtingModel:
+			rootJungtingz -= 0.01f;
+			break;
+		case PaulModel:
+			rootPaulz -= 0.01f;
+			break;
+		case JennaModel:
+			rootJennaz -= 0.01f;
+			break;
+		case RunzeModel:
+			rootRunzez -= 0.01f;
+			break;
+		case AlecModel:
+			rootAlecz -= 0.01f;
+			break;
+
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+	{
+		isMovingForward = !isMovingForward;
+	}
+
+	if (isMovingForward) {
+		switch (currentModel) {
+		case JungtingModel:
+			rootJungtingz += 0.01f;
+			break;
+		case PaulModel:
+			rootPaulz += 0.01f;
+			break;
+		case JennaModel:
+			rootJennaz += 0.01f;
+			break;
+		case RunzeModel:
+			rootRunzez += 0.01f;
+			break;
+		case AlecModel:
+			rootAlecz += 0.01f;
 			break;
 
 		}
