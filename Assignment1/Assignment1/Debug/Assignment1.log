@@ -1,16 +1,13 @@
 ﻿  main.cpp
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(15,44): warning C4305: 'initializing': truncation from 'double' to 'float'
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(367,3): warning C4551: function call missing argument list
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(444,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(544,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1057,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1058,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1062,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1063,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1064,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1065,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-D:\Github\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1090,28): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-glew32s.lib(glew.obj) : warning LNK4099: PDB 'vc120.pdb' was not found with 'glew32s.lib(glew.obj)' or at 'D:\Github\COMP371-Shading-2\Assignment1\Debug\vc120.pdb'; linking object as if no debug info
-  Assignment1.vcxproj -> D:\Github\COMP371-Shading-2\Assignment1\Debug\Assignment1.exe
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(15,44): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(367,3): warning C4551: function call missing argument list
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(444,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(544,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1052,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1053,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1057,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1058,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1059,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1060,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1085,28): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Assignment1.vcxproj -> C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Debug\Assignment1.exe

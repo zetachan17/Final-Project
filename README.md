@@ -36,6 +36,10 @@ Application Controls:
 		C/V : Rotate the model 5 degrees to the left and right on the Z axis.
 
 		B: Toggle the shadow.
+
+		Y: Continuously moving forward.
+
+		H: Continuously moving backward.
 		
 	****************************
 	Controlling the World View-

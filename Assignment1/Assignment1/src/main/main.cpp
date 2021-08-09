@@ -721,7 +721,7 @@ void processInput(GLFWwindow* window)
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
 	{
 		isMovingBackward = !isMovingBackward;
 	}
