@@ -1,4 +1,10 @@
-﻿#include "main.h"
+﻿// COMP 371
+// Assignment 2 finished by Team 10
+// 2021-08-08 Copyright by A+ Squad
+// We used https://learnopengl.com/ and labs as our code source.
+
+
+#include "main.h"
 
 // Handle keyboard input
 void processInput(GLFWwindow* window);
@@ -20,7 +26,7 @@ glm::vec3 pointLightPosition(0.0f, 10.0f, 0.0f);
 // light declarations
 PointLightSource pointLightSource = PointLightSource(
 	pointLightPosition,
-	glm::vec3(glm::radians(0.0f), 0, 0),
+	glm::vec3(glm::radians(30.0f), 0, 0),
 	glm::vec3(1.0f, 1.0f, 1.0f) //colour of light
 );
 

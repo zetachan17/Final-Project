@@ -1,4 +1,10 @@
-Quiz 1 completed by Alec Arakilyan 40097452
+Assignment 2 completed by Team 10
+Team member:
+Juting Ye 40082557
+Iphigenia Jenna Pappas 40077089
+Paul Grippa Vento 40174007
+Alec Arakilyan 40097452 
+Runze Zhu 40107923
 ***			***			***			***			***
 ***********************
 Application Controls:
@@ -18,8 +24,18 @@ Application Controls:
 		SHIFT + S: Move Model Downward
 
 		SHIFT + D: Move Model Right
+
+		Q: Move Model Forward
+
+		E: Move Model Backward
 		
-		A/D : Rotate the model 5 degrees to the left and right on the Y axis.
+		A/D : Rotate the model 5 degrees to the left and right on the X axis.
+
+		Z/X : Rotate the model 5 degrees to the left and right on the Y axis.
+
+		C/V : Rotate the model 5 degrees to the left and right on the Z axis.
+
+		B: Toggle the shadow.
 		
 	****************************
 	Controlling the World View-
