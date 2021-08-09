@@ -23,6 +23,7 @@ uniform float constant;
 uniform float linear;
 uniform float quadratic;
 uniform float ambientStrength;
+uniform bool isShadow;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -63,6 +64,10 @@ void main()
     vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
 
     float shadow = ShadowCalculation(FragPosLightSpace);
+    if(!isShadow){
+        shadow = 0;
+    }
+    
     
     //shadow = 0;
     vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) ;

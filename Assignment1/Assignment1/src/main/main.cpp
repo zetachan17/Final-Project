@@ -118,6 +118,8 @@ float angleJungtingy = 0.0f;
 bool isMoving = false;
 #pragma endregion
 
+bool isShadow = true;
+
 bool textureEn = true;
 GLenum paulType = GL_TRIANGLES;
 GLenum alecType = GL_TRIANGLES;
@@ -478,6 +480,7 @@ int main()
 
 		// 1. first render to depth map
 
+		shaderList[0].setBool("isShadow", isShadow);
 		shaderList[2].useShader();
 		shaderList[2].setMat4("lightSpaceMatrix", lightSpaceMatrix);
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -709,6 +712,11 @@ void processInput(GLFWwindow* window)
 			break;
 
 		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
+	{
+		isShadow = !isShadow;
 	}
 
 	// rotate
