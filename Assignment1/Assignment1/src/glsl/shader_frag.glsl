@@ -69,7 +69,7 @@ void main()
     }
     
     
-    //shadow = 0;
+    shadow = 0;
     vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) ;
     FragColor = vec4(result, 1.0) * textureColor ;
 

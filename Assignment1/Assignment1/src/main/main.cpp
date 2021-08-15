@@ -23,14 +23,26 @@ bool firstMouse = true;
 //Create Light
 glm::vec3 pointLightPosition(0.0f, 10.0f, 0.0f);
 
-// light declarations
+// light declarations	
 PointLightSource pointLightSource = PointLightSource(
 	pointLightPosition,
 	glm::vec3(glm::radians(30.0f), 0, 0),
 	glm::vec3(1.0f, 1.0f, 1.0f) //colour of light
 );
 
+/// Holds all state information relevant to a character as loaded using FreeType
+struct Character {
+	unsigned int TextureID; // ID handle of the glyph texture
+	glm::ivec2   Size;      // Size of glyph
+	glm::ivec2   Bearing;   // Offset from baseline to left/top of glyph
+	unsigned int Advance;   // Horizontal offset to advance to next glyph
+};
 
+std::map<GLchar, Character> Characters;
+
+float ambientStrength = 0.3f;
+
+bool show_app_simple_overlay = true;
 // Texture enumerator
 enum textures {
 	GreenMetal = 0, BlueMetal = 1, Gold = 2,
@@ -46,7 +58,7 @@ void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, floa
 void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
 void createAlecCube(float rootAx, float rootAy, float rootAz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
 void createRunzeCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
-
+void RenderText(Shader& shader, std::string text, float i, float x, float y, float scale, glm::vec3 color);
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -69,6 +81,12 @@ static const char* LightFragShader = "Assignment1/src/glsl/LightFragShader.glsl"
 
 static const char* DepthVertShader = "Assignment1/src/glsl/depthVertexShader.glsl";
 static const char* DepthFragShader = "Assignment1/src/glsl/depthFragmentShader.glsl";
+
+// shaders for text rendering
+static const char* TextVertShader = "Assignment1/src/glsl/textVertShader.glsl";
+static const char* TextFragShader = "Assignment1/src/glsl/textFragShader.glsl";
+
+
 //Working with Uniform variables
 //Starts at 0.0, increments by 0.0005 intil it reaches 0.7 and then goes opposite direction
 bool direction = true;
@@ -125,6 +143,8 @@ bool isMovingForward = false;
 
 #pragma endregion
 
+float movingSpeed = 0.01f;
+
 bool isShadow = true;
 
 bool textureEn = true;
@@ -161,7 +181,6 @@ GLuint vao[5];
 GLuint vbo[5];
 
 int currentShader = 0;
-
 
 
 void CreateObjects()
@@ -258,6 +277,8 @@ void CreateObjects()
 	//lighting attribute
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec3), (void*)(3 * sizeof(glm::vec3)));
 	glEnableVertexAttribArray(3);
+
+	
 }
 
 void CreateShaders()
@@ -268,8 +289,9 @@ void CreateShaders()
 	shaderList.push_back(shader2);
 	Shader shader3 = Shader(DepthVertShader, DepthFragShader);
 	shaderList.push_back(shader3);
+	Shader shader4 = Shader(TextVertShader, TextFragShader);
+	shaderList.push_back(shader4);
 }
-
 
 void CreateAndLoadTextures() {
 	Texture* gmT = new Texture("Assignment1/src/Textures/greenMetal.png");
@@ -359,6 +381,7 @@ int main()
 
 	//Create Window (star makes it a pointer)
 	GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "COMP 371: Assignment 2", NULL, NULL);
+	//GLFWwindow* welcomeWindow = glfwCreateWindow(WIDTH, HEIGHT, "Welcome to SuperHyper Cube", NULL, NULL);
 
 	//Check if window has been constructed successfully
 	if (!mainWindow)
@@ -368,6 +391,88 @@ int main()
 		return 1;
 	}
 
+	
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+
+#pragma region freetype
+	// FreeType
+		// --------
+		FT_Library ft;
+	// All functions return a value different than 0 whenever an error occurred
+	if (FT_Init_FreeType(&ft))
+	{
+		std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+		return -1;
+	}
+
+	// find path to font
+	std::string font_name = "Assignment1/src/Font/ARLRDBD.TTF";
+	if (font_name.empty())
+	{
+		std::cout << "ERROR::FREETYPE: Failed to load font_name" << std::endl;
+		return -1;
+	}
+
+	// load font as face
+	FT_Face face;
+	if (FT_New_Face(ft, font_name.c_str(), 0, &face)) {
+		std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+		return -1;
+	}
+	else {
+		// set size to load glyphs as
+		FT_Set_Pixel_Sizes(face, 0, 48);
+
+		// disable byte-alignment restriction
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+		// load first 128 characters of ASCII set
+		for (unsigned char c = 0; c < 128; c++)
+		{
+			// Load character glyph 
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+			{
+				std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+				continue;
+			}
+			// generate texture
+			unsigned int texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(
+				GL_TEXTURE_2D,
+				0,
+				GL_RED,
+				face->glyph->bitmap.width,
+				face->glyph->bitmap.rows,
+				0,
+				GL_RED,
+				GL_UNSIGNED_BYTE,
+				face->glyph->bitmap.buffer
+			);
+			// set texture options
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			// now store character for later use
+			Character character = {
+				texture,
+				glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				static_cast<unsigned int>(face->glyph->advance.x)
+			};
+			Characters.insert(std::pair<char, Character>(c, character));
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	// destroy FreeType once we're finished
+	FT_Done_Face(face);
+	FT_Done_FreeType(ft);
+#pragma endregion
 
 	//Get buffer size information
 	//& means with reference to
@@ -389,15 +494,17 @@ int main()
 		return 1;
 	}
 
+
+
 	// tell GLFW to capture our mouse
-	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	glfwSetCursorPosCallback(mainWindow, mouse_callback);
 	glfwSetScrollCallback(mainWindow, scroll_callback);
 	glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback);
 
 	//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 
 	//Setup viewport size 
 	glViewport(0, 0, bufferWidth, bufferHeight);
@@ -431,7 +538,24 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #pragma endregion
 
+	
+	glBindVertexArray(vao[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glEnableVertexAttribArray(0);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+
 	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
+
+	// Implement ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
 
 	//Loop until window closed
 	while (!glfwWindowShouldClose(mainWindow)) {
@@ -447,6 +571,7 @@ int main()
 
 		// input
 		// -----
+		//processInput(welcomeWindow);
 		processInput(mainWindow);
 
 		//Clear window (make a light blue background) Last Value: alpha/ Transparent vs Opaque
@@ -454,6 +579,14 @@ int main()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		
+		// Declare new frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		glBindVertexArray(vao[0]);
 
 		// activate shader
 		shaderList[0].useShader();
@@ -510,7 +643,7 @@ int main()
 #pragma endregion
 
 #pragma endregion
-
+		
 		//Unnasign the shader
 		glUseProgram(0);
 
@@ -527,12 +660,54 @@ int main()
 		//Unnasign the shader
 		glUseProgram(0);
 
+		
+
+		// HUD
+		glBindVertexArray(vao[1]);
+
+		//glEnable(GL_BLEND);
+		//glBlendFunci(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0);
+
+		glm::mat4 projection2 = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
+		shaderList[3].useShader();
+		shaderList[3].setMat4("projection", projection2);
+
+		//glUniformMatrix4fv(glGetUniformLocation(shaderList[3].shader_ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection2));
+
+		RenderText(shaderList[3], "This is sample text", ambientStrength, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+		RenderText(shaderList[3], "(C) LearnOpenGL.com", movingSpeed, 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+		
+		//RenderScene(3);
+
+		
+		//Unnasign the shader
+		glUseProgram(0);
+
+		ImGui::Begin("Settings");
+		ImGui::Text("Diffculity");
+		ImGui::SliderFloat("Speed", &movingSpeed, 0.01, 0.05);
+		ImGui::Text(" ");
+		ImGui::Text("General");
+		ImGui::SliderFloat("Brightness", &ambientStrength, 0.0f, 1.0f);
+		
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwSwapBuffers(mainWindow);
 
 	}
 
+	// Destroy ImGui
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	return 0;
 }
+
+
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -703,19 +878,19 @@ void processInput(GLFWwindow* window)
 	{
 		switch (currentModel) {
 		case JungtingModel:
-			rootJungtingz -= 0.01f;
+			rootJungtingz -= movingSpeed;
 			break;
 		case PaulModel:
-			rootPaulz -= 0.01f;
+			rootPaulz -= movingSpeed;
 			break;
 		case JennaModel:
-			rootJennaz -= 0.01f;
+			rootJennaz -= movingSpeed;
 			break;
 		case RunzeModel:
-			rootRunzez -= 0.01f;
+			rootRunzez -= movingSpeed;
 			break;
 		case AlecModel:
-			rootAlecz -= 0.01f;
+			rootAlecz -= movingSpeed;
 			break;
 
 		}
@@ -729,19 +904,19 @@ void processInput(GLFWwindow* window)
 	if (isMovingBackward) {
 		switch (currentModel) {
 		case JungtingModel:
-			rootJungtingz -= 0.01f;
+			rootJungtingz -= movingSpeed;
 			break;
 		case PaulModel:
-			rootPaulz -= 0.01f;
+			rootPaulz -= movingSpeed;
 			break;
 		case JennaModel:
-			rootJennaz -= 0.01f;
+			rootJennaz -= movingSpeed;
 			break;
 		case RunzeModel:
-			rootRunzez -= 0.01f;
+			rootRunzez -= movingSpeed;
 			break;
 		case AlecModel:
-			rootAlecz -= 0.01f;
+			rootAlecz -= movingSpeed;
 			break;
 
 		}
@@ -1093,7 +1268,7 @@ void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, flo
 
 	shaderList[currentShader].setVec3("viewPos", camera.Position); //for specular lighting
 	//load shader for light
-	shaderList[currentShader].setFloat("ambientStrength", 0.3f);
+	shaderList[currentShader].setFloat("ambientStrength", ambientStrength);
 	shaderList[currentShader].setVec3("lightPosition", pointLightSource.position);
 	shaderList[currentShader].setVec3("lightDirection", pointLightSource.direction);
 	shaderList[currentShader].setVec3("lightColour", pointLightSource.color);
@@ -1883,3 +2058,114 @@ void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, floa
 }
 
 #pragma endregion
+
+// render line of text
+// -------------------
+void RenderText(Shader& shader, std::string text, float i, float x, float y, float scale, glm::vec3 color)
+{
+	// activate corresponding render state	
+	shader.useShader();
+	glUniform3f(glGetUniformLocation(shader.shader_ID, "textColor"), color.x, color.y, color.z);
+	glActiveTexture(GL_TEXTURE0);
+	glBindVertexArray(vao[1]);
+
+	std::string alltext = text + std::to_string(i);
+
+	// iterate through all characters
+	std::string::const_iterator c;
+	for (c = alltext.begin(); c != alltext.end(); c++)
+	{
+		Character ch = Characters[*c];
+
+		float xpos = x + ch.Bearing.x * scale;
+		float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+		float w = ch.Size.x * scale;
+		float h = ch.Size.y * scale;
+		// update VBO for each character
+		float vertices[6][4] = {
+			{ xpos,     ypos + h,   0.0f, 0.0f },
+			{ xpos,     ypos,       0.0f, 1.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+
+			{ xpos,     ypos + h,   0.0f, 0.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+			{ xpos + w, ypos + h,   1.0f, 0.0f }
+		};
+		// render glyph texture over quad
+		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+		// update content of VBO memory
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		// render quad
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+		x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+	}
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+
+//useless
+/*
+static void ShowExampleAppSimpleOverlay(bool* p_open)
+{
+	static int corner = 0;
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+	if (corner != -1)
+	{
+		const float PAD = 10.0f;
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+		ImVec2 work_size = viewport->WorkSize;
+		ImVec2 window_pos, window_pos_pivot;
+		window_pos.x = (corner & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+		window_pos.y = (corner & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+		window_pos_pivot.x = (corner & 1) ? 1.0f : 0.0f;
+		window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+		window_flags |= ImGuiWindowFlags_NoMove;
+	}
+	ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+	if (ImGui::Begin("Example: Simple overlay", p_open, window_flags))
+	{
+		ImGui::Text("Simple overlay\n" "in the corner of the screen.\n" "(right-click to change position)");
+		ImGui::Separator();
+		if (ImGui::IsMousePosValid())
+			ImGui::Text("Mouse Position: (%.1f,%.1f)", io.MousePos.x, io.MousePos.y);
+		else
+			ImGui::Text("Mouse Position: <invalid>");
+		if (ImGui::BeginPopupContextWindow())
+		{
+			if (ImGui::MenuItem("Custom", NULL, corner == -1)) corner = -1;
+			if (ImGui::MenuItem("Top-left", NULL, corner == 0)) corner = 0;
+			if (ImGui::MenuItem("Top-right", NULL, corner == 1)) corner = 1;
+			if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) corner = 2;
+			if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) corner = 3;
+			if (p_open && ImGui::MenuItem("Close")) *p_open = false;
+			ImGui::EndPopup();
+		}
+	}
+	ImGui::End();
+}
+
+void drawText(const char* text, int length, int x, int y) {
+	glMatrixMode(GL_PROJECTION);
+	double* matrix = new double[16];
+	glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+	glLoadIdentity();
+	glOrtho(0, 800, 0, 600, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
+	glRasterPos2d(x, y);
+	//for (int i = 0; i < length, i++) {
+		
+	//}
+}*/
