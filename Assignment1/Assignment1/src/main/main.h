@@ -5,6 +5,8 @@
 #include <map>
 #include <cmath>
 #include <vector> //Array list as oppose to array
+#include <string>
+#include <windows.h>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -23,6 +25,9 @@
 #include "./camera/Camera.h"
 #include "./texture/Texture.h"
 #include"./Lights/PointLightSource.h"
+
+
+#include <./irrKlang/irrKlang.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <./stb_image.h>

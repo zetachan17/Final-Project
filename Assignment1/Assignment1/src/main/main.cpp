@@ -6,6 +6,13 @@
 
 #include "main.h"
 
+#pragma comment(lib, "./irrKlang.lib")
+
+using namespace std;
+using namespace irrklang;
+
+ISoundEngine* SoundEngine = createIrrKlangDevice();
+
 // Handle keyboard input
 void processInput(GLFWwindow* window);
 
@@ -388,10 +395,9 @@ int main()
 	{
 		printf("GLFW  window creation failed!");
 		glfwTerminate;
-		return 1;
+		return -1;
 	}
 
-	
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -494,8 +500,6 @@ int main()
 		return 1;
 	}
 
-
-
 	// tell GLFW to capture our mouse
 	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -504,7 +508,7 @@ int main()
 	glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback);
 
 	//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 
 	//Setup viewport size 
 	glViewport(0, 0, bufferWidth, bufferHeight);
@@ -549,6 +553,8 @@ int main()
 
 	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
 
+	SoundEngine->play2D("Assignment1/src/Music/breakout.mp3", true);
+
 	// Implement ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -556,6 +562,8 @@ int main()
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
+
+
 
 	//Loop until window closed
 	while (!glfwWindowShouldClose(mainWindow)) {
@@ -660,28 +668,21 @@ int main()
 		//Unnasign the shader
 		glUseProgram(0);
 
-		
+		//glDisable(GL_DEPTH_TEST);
 
 		// HUD
 		glBindVertexArray(vao[1]);
 
-		//glEnable(GL_BLEND);
-		//glBlendFunci(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 0);
-
-		glm::mat4 projection2 = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
 		shaderList[3].useShader();
+		glm::mat4 projection2 = glm::ortho(0.0f, static_cast<float>(WIDTH), 0.0f, static_cast<float>(HEIGHT));
 		shaderList[3].setMat4("projection", projection2);
 
-		//glUniformMatrix4fv(glGetUniformLocation(shaderList[3].shader_ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection2));
-
-		RenderText(shaderList[3], "This is sample text", ambientStrength, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-		RenderText(shaderList[3], "(C) LearnOpenGL.com", movingSpeed, 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
-		
-		//RenderScene(3);
-
+		RenderText(shaderList[3], "Test1", ambientStrength, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+		RenderText(shaderList[3], "Test2", movingSpeed, 540.0f, 540.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
 		
 		//Unnasign the shader
 		glUseProgram(0);
+
 
 		ImGui::Begin("Settings");
 		ImGui::Text("Diffculity");
@@ -754,6 +755,7 @@ void processInput(GLFWwindow* window)
 	}
 
 #pragma endregion
+	/*
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
 		// Turn Textures On/Off
 
@@ -762,7 +764,7 @@ void processInput(GLFWwindow* window)
 			glDisable(GL_TEXTURE_2D);
 		else
 			glEnable(GL_TEXTURE_2D);
-	}
+	}*/
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
@@ -2107,8 +2109,6 @@ void RenderText(Shader& shader, std::string text, float i, float x, float y, flo
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-
-
 
 //useless
 /*
