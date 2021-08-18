@@ -95,13 +95,16 @@
     <ClInclude Include="src\Camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\TextRenderer\text_renderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Dependencies\Irrklang\include\irrKlang.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\irrKlang\irrKlang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mesh\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Model\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -116,6 +119,8 @@
     <None Include="src\glsl\textVertShader.glsl" />
     <None Include="freetype.dll" />
     <None Include="src\freetype.dll" />
+    <None Include="src\glsl\modelVertShader.glsl" />
+    <None Include="src\glsl\modelFragShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="src\Font\ARLRDBD.TTF" />

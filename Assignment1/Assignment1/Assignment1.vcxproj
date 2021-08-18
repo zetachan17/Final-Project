@@ -88,13 +88,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Assignment1\src;$(SolutionDir)Dependencies\glm;$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)Dependencies\glew-2.1.0\include;$(SolutionDir)Dependencies\imgui;$(SolutionDir)Dependencies\freetype\include;$(SolutionDir)Dependencies\Irrklang\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Assignment1\src;$(SolutionDir)Dependencies\glm;$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)Dependencies\glew-2.1.0\include;$(SolutionDir)Dependencies\imgui;$(SolutionDir)Dependencies\freetype\include;$(SolutionDir)Dependencies\Irrklang\include;$(SolutionDir)Dependencies\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\GLFW\lib-vc2019;$(SolutionDir)Dependencies\glew-2.1.0\lib\Release\Win32;$(SolutionDir)Dependencies\freetype\lib;$(SolutionDir)Assignment1;$(SolutionDir)Dependencies\Irrklang</AdditionalLibraryDirectories>
-      <AdditionalDependencies>freetype.lib;glew32s.lib;glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\GLFW\lib-vc2019;$(SolutionDir)Dependencies\glew-2.1.0\lib\Release\Win32;$(SolutionDir)Dependencies\freetype\lib;$(SolutionDir)Assignment1;$(SolutionDir)Dependencies\Irrklang;$(SolutionDir)Dependencies\assimp\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freetype.lib;glew32s.lib;glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;irrKlang.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -171,8 +171,9 @@
     <ClInclude Include="src\irrKlang\irrKlang.h" />
     <ClInclude Include="src\Lights\PointLightSource.h" />
     <ClInclude Include="src\main\main.h" />
+    <ClInclude Include="src\Mesh\mesh.h" />
+    <ClInclude Include="src\Model\model.h" />
     <ClInclude Include="src\shader\Shader.h" />
-    <ClInclude Include="src\TextRenderer\text_renderer.h" />
     <ClInclude Include="src\Texture\Texture.h" />
   </ItemGroup>
   <ItemGroup>
@@ -182,6 +183,8 @@
     <None Include="src\glsl\depthVertexShader.glsl" />
     <None Include="src\glsl\LightFragShader.glsl" />
     <None Include="src\glsl\LightVertShader.glsl" />
+    <None Include="src\glsl\modelFragShader.glsl" />
+    <None Include="src\glsl\modelVertShader.glsl" />
     <None Include="src\glsl\shader_frag.glsl" />
     <None Include="src\glsl\shader_vert.glsl" />
     <None Include="src\glsl\textFragShader.glsl" />

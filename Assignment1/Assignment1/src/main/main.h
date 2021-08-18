@@ -22,10 +22,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "./shader/Shader.h"
+#include "./Model/model.h"
 #include "./camera/Camera.h"
 #include "./texture/Texture.h"
 #include"./Lights/PointLightSource.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <./irrKlang/irrKlang.h>
 
