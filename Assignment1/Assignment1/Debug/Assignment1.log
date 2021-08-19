@@ -1,15 +1,17 @@
 ﻿  main.cpp
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(24,44): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(424,3): warning C4551: function call missing argument list
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(606,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(743,55): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(774,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(918,20): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1340,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1341,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1345,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1346,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1347,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1348,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1373,28): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(22,44): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(395,3): warning C4551: function call missing argument list
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(574,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(744,56): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(802,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(906,20): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(990,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(991,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(995,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(996,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(997,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(998,10): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1033,29): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1036,30): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Assignment1\src\main\main.cpp(1087,9): warning C4553: '==': result of expression not used; did you intend '='?
   Assignment1.vcxproj -> C:\Users\zetas\Desktop\COMP371-Shading-2\Assignment1\Debug\Assignment1.exe

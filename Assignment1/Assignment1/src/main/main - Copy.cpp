@@ -24,7 +24,7 @@ const GLint WIDTH = 1024, HEIGHT = 768;
 const float toRadians = 3.14159265 / 180.0f;
 const int numGridLines = 100;
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera = Camera(glm::vec3(-5.0f, 3.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f), -50.0f, -20.0f);
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -60,6 +60,10 @@ enum textures {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+
+int modelRendered = 0;
 
 void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
 void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
@@ -116,40 +120,41 @@ float curSize = 0.4f;
 float maxSize = 0.8f;
 float minSize = 0.1f;
 
-float rootAlecx = -3.5f;
-float rootAlecy = 0.0;
-float rootAlecz = -3.0f;
+float rootAlecx = 0.0f;
+float rootAlecy = 0.0f;
+float rootAlecz = 5.0f;
 float angleAlecx = 0.0f;
 float angleAlecz = 0.0f;
 float angleAlecy = 0.0f;
 
-float rootPaulx = 3.5f;
+float rootPaulx = 0.0f;
 float rootPauly = 0.0f;
-float rootPaulz = 3.5f;
+float rootPaulz = 5.0f;
 float anglePaulx = 0.0f;
 float anglePaulz = 0.0f;
 float anglePauly = 0.0f;
 
-float rootJennax = 3.5f;
+float rootJennax = 0.0f;
 float rootJennay = 0.0f;
-float rootJennaz = -3.5f;
+float rootJennaz = 5.0f;
 float angleJennax = 0.0f;
 float angleJennaz = 0.0f;
 float angleJennay = 0.0f;
 
-float rootRunzex = -3.5f;
+float rootRunzex = 0.0f;
 float rootRunzey = 0.0;
-float rootRunzez = 3.5f;
+float rootRunzez = 5.0f;
 float angleRunzex = 0.0f;
 float angleRunzez = 0.0f;
 float angleRunzey = 0.0f;
 
 float rootJungtingx = 0.0f;
 float rootJungtingy = 0.0f;
-float rootJungtingz = 0.0f;
+float rootJungtingz = 5.0f;
 float angleJungtingx = 0.0f;
 float angleJungtingz = 0.0f;
 float angleJungtingy = 0.0f;
+
 bool isMovingBackward = false;
 bool isMovingForward = false;
 
@@ -365,17 +370,30 @@ void RenderScene(int shaderIndex) {
 	textureList[Tile].UseTexture();
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
-	textureList[GreenMetal].UseTexture();
-	createPaulCube(rootPaulx, rootPauly, rootPaulz, paulScale, anglePaulx, anglePaulz, anglePauly, paulType);
-	textureList[TealMetal].UseTexture();
-	createRunzeCube(rootRunzex, rootRunzey, rootRunzez, runzeScale, angleRunzex, angleRunzez, angleRunzey,runzeType);
-	textureList[BlueMetal].UseTexture();
-	createJuntingCube(rootJungtingx, rootJungtingy, rootJungtingz, jungtingScale, angleJungtingx, angleJungtingz, angleJungtingy, juntingType);
-	textureList[RoseGold].UseTexture();
-	createJennaCube(rootJennax, rootJennay, rootJennaz, jennaScale, angleJennax, angleJennaz, angleJennay, jennaType);
-	textureList[Gold].UseTexture();
-	createAlecCube(rootAlecx, rootAlecy, rootAlecz, alecScale, angleAlecx, angleAlecz, angleAlecy, alecType);
 
+	switch (modelRendered)
+	{
+		case 0:
+			textureList[GreenMetal].UseTexture();
+			createPaulCube(rootPaulx, rootPauly, rootPaulz, paulScale, anglePaulx, anglePaulz, anglePauly, paulType);
+			break;
+		case 1:
+			textureList[TealMetal].UseTexture();
+			createRunzeCube(rootRunzex, rootRunzey, rootRunzez, runzeScale, angleRunzex, angleRunzez, angleRunzey, runzeType);
+			break;
+		case 2:
+			textureList[BlueMetal].UseTexture();
+			createJuntingCube(rootJungtingx, rootJungtingy, rootJungtingz, jungtingScale, angleJungtingx, angleJungtingz, angleJungtingy, juntingType);
+			break;
+		case 3:
+			textureList[RoseGold].UseTexture();
+			createJennaCube(rootJennax, rootJennay, rootJennaz, jennaScale, angleJennax, angleJennaz, angleJennay, jennaType);
+			break;
+		case 4:
+			textureList[Gold].UseTexture();
+			createAlecCube(rootAlecx, rootAlecy, rootAlecz, alecScale, angleAlecx, angleAlecz, angleAlecy, alecType);
+			break;
+	}
 }
 
 int main()
@@ -510,11 +528,12 @@ int main()
 	}
 
 	// tell GLFW to capture our mouse
-	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glfwSetCursorPosCallback(mainWindow, mouse_callback);
 	glfwSetScrollCallback(mainWindow, scroll_callback);
 	glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback);
+	glfwSetKeyCallback(mainWindow, key_callback);
 
 	//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
 	glEnable(GL_DEPTH_TEST);
@@ -599,7 +618,6 @@ int main()
 		//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
 		// Declare new frame
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -657,6 +675,15 @@ int main()
 
 		shaderList[0].useShader();
 		shaderList[currentShader].setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		shaderList[currentShader].setVec3("viewPos", glm::vec3(0.0f, 5.0f, 0.0f)); //for specular lighting
+		//load shader for light
+		shaderList[currentShader].setFloat("ambientStrength", 0.3f);
+		shaderList[currentShader].setVec3("lightPosition", pointLightSource.position);
+		shaderList[currentShader].setVec3("lightDirection", pointLightSource.direction);
+		shaderList[currentShader].setVec3("lightColour", pointLightSource.color);
+		shaderList[currentShader].setFloat("constant", pointLightSource.constant);
+		shaderList[currentShader].setFloat("linear", pointLightSource.linear);
+		shaderList[currentShader].setFloat("quadratic", pointLightSource.quadratic);
 		RenderScene(0);
 
 #pragma endregion
@@ -702,7 +729,7 @@ int main()
 		shaderList[4].setMat4("view", viewModel);
 		
 		glm::mat4 modelModel = glm::mat4(1.0f);
-		modelModel = glm::translate(modelModel, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		modelModel = glm::translate(modelModel, glm::vec3(0.0f, 4.0f, 0.0f)); // translate it down so it's at the center of the scene
 		modelModel = glm::scale(modelModel, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
 		shaderList[4].setMat4("model", modelModel);
 		UFO.Draw(shaderList[4]);
@@ -896,6 +923,7 @@ void processInput(GLFWwindow* window)
 	{
 		isRotating = true;
 		currentDirection = UPDIR;
+		SoundEngine->play2D("Assignment1/src/Music/bleep.mp3", false);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS && !isRotating)
@@ -903,12 +931,14 @@ void processInput(GLFWwindow* window)
 
 		isRotating = true;
 		currentDirection = DOWNDIR;
+		SoundEngine->play2D("Assignment1/src/Music/bleep.mp3", false);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !isRotating)
 	{
 		isRotating = true;
 		currentDirection = LEFTDIR;
+		SoundEngine->play2D("Assignment1/src/Music/bleep.mp3", false);
 
 	}
 
@@ -916,6 +946,7 @@ void processInput(GLFWwindow* window)
 	{
 		isRotating = true;
 		currentDirection = RIGHTDIR;
+		SoundEngine->play2D("Assignment1/src/Music/bleep.mp3", false);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
@@ -1342,508 +1373,889 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(yoffset);
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_7 && action == GLFW_PRESS) {
+		modelRendered = rand() % 5;
+
+		switch (modelRendered)
+		{
+		case 0:
+			currentModel = PaulModel;
+			break;
+		case 1:
+			currentModel = RunzeModel;
+			break;
+		case 2:
+			currentModel = JungtingModel;
+			break;
+		case 3:
+			currentModel = JennaModel;
+			break;
+		case 4:
+			currentModel = AlecModel;
+			break;
+		}
+	}
+}
 
 
 #pragma region Model Creation
 
 void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
-	shaderList[currentShader].setVec3("viewPos", camera.Position); //for specular lighting
-	//load shader for light
-	shaderList[currentShader].setFloat("ambientStrength", ambientStrength);
-	shaderList[currentShader].setVec3("lightPosition", pointLightSource.position);
-	shaderList[currentShader].setVec3("lightDirection", pointLightSource.direction);
-	shaderList[currentShader].setVec3("lightColour", pointLightSource.color);
-	shaderList[currentShader].setFloat("constant", pointLightSource.constant);
-	shaderList[currentShader].setFloat("linear", pointLightSource.linear);
-	shaderList[currentShader].setFloat("quadratic", pointLightSource.quadratic);
+
 
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
 	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
-	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));
+	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
 
-
+	//object
 	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
-	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.15f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.25f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.15f), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * 0.3f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.25f), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.3f, cubeScale * 0.1f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.35f), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * 0.1f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.45f), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * 0.3f, cubeScale * -0.3f)) * glm::scale(glm::mat4(1.0f), cubeScale * zShortScale);
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-
-
-	//left and right
-	model = glm::translate(matrix, glm::vec3(0.0f, 0.0f, cubeScale * 0.15f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * -0.1f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), cubeScale * zShortScale);
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, -0.0f, cubeScale * 0.25f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-
-
-	//left and right
-	model = glm::translate(matrix, glm::vec3(0.0f, 0.0f, cubeScale * (-0.15f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(0.0f, -0.0f, cubeScale * (-0.25f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	//BUILD WALL
+#pragma region Wall Jenna
 
 	textureList[Brick].UseTexture();
 
-	for (int j = 0; j < 10; ++j) {
-
-		for (int i = 0; i < 3; ++i) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (-0.35) + cubeScale * (0.1 * i), cubeScale * (-0.55 + (0.1 * j)), cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-
-	}
-
-
-	for (int j = 0; j < 10; ++j) {
-		for (int i = 0; i < 3; ++i) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * 0.15 + cubeScale * (0.1 * i), cubeScale * (-0.55 + (0.1 * j)), cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
-	//Add 
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.55), cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	glm::vec3 wallVec = glm::vec3(0.0f, 0.0f, 0.0f);
+	textureList[Brick].UseTexture();
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y - 0.5f, wallVec.z));
+	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
-	model = identMatrix;
+	modelWall = identMatrix;
 
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.35, cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.4f, wallVec.y - 0.5f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
-	model = identMatrix;
+	modelWall = identMatrix;
 
-	//End Jenna Code
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.5f, wallVec.y - 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.5f, wallVec.y - 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.5f, wallVec.y - 0.1f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.5f, wallVec.y - 0.1f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.9f, wallVec.y + 0.1f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.9f, wallVec.y + 0.1f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.5f, wallVec.y + 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.7f, wallVec.y + 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.2f, wallVec.y + 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y + 0.5f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.4f, wallVec.y + 0.5f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+#pragma endregion
 
 }
 void createRunzeCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
 	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
-	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));
+	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
 
-
-	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz; 
-	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-
+	//object
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
+	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	
-	//object
-	for (int i = 0; i < 7; ++i) {
-		for (int j = 0; j < 7; ++j) {
-			// long horizontal line
-			if (i == 2 || i == 3 || i == 6) {
-				model = glm::translate(matrix, glm::vec3(cubeScale * (0.1f * j + 0.1f), cubeScale * (0.1f * i + 0.1f), cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-				//model = glm::rotate(model, glm::radians(spinningCubeAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-				model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-				//model = glm::translate(model, glm::vec3(cubeScale * (0.1f * j + 0.1f) + rootx, cubeScale * (0.1f * i + 0.1f) + rooty, cubeScale * 0.3f + rootz));
-				//model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-				shaderList[currentShader].setMat4("model", model);
-				glDrawArrays(type, 0, 36);
-				model = identMatrix;
-			}
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * -0.3f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
 
-			// bottom short line
-			if (i == 0 || i == 1) {
-				if (j >= 2) {
-					continue;
-				}
-				model = glm::translate(matrix, glm::vec3(cubeScale * (0.6f * j + 0.1f), cubeScale * (0.1f * i + 0.1f), cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-				//model = glm::rotate(model, glm::radians(spinningCubeAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-				model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-				//model = glm::translate(model, glm::vec3(cubeScale * (0.6f * j + 0.1f) + rootx, cubeScale * (0.1f * i + 0.1f) + rooty, cubeScale * 0.3f + rootz));
-				//model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-				shaderList[currentShader].setMat4("model", model);
-				glDrawArrays(type, 0, 36);
-				model = identMatrix;
-			}
 
-			// top short line
-			if (i == 4 || i == 5) {
-				model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * (0.1f * i + 0.1f), cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-				//model = glm::rotate(model, glm::radians(spinningCubeAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-				model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-				//model = glm::translate(model, glm::vec3(cubeScale * 0.4f + rootx, cubeScale * (0.1f * i + 0.1f) + rooty, cubeScale * 0.3f + rootz));
-				//model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-				shaderList[currentShader].setMat4("model", model);
-				glDrawArrays(type, 0, 36);
-				model = identMatrix;
-			}
-		}
-	}
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.3f, cubeScale * 0.3f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
 
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.6f, cubeScale * 0.4f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * -0.3f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.2f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * 0.0f, cubeScale * -0.3f)) * glm::scale(glm::mat4(1.0f), cubeScale * zShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.7f, cubeScale * -0.1f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+#pragma region Wall Runze
 	textureList[Brick].UseTexture();
+	glm::vec3 wallVec = glm::vec3(0.0f, 0.0f, 0.0f);
+	textureList[Brick].UseTexture();
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.8f, wallVec.y - 0.6f, wallVec.z));
+	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	// wall
-	// top & bottom
-	for (int i = 0; i < 9; ++i) {
-		for (int j = 0; j < 2; ++j) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (0.1f * i), cubeScale * 0.8f * j, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-			shaderList[currentShader].setMat4("model", model);
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
-	// left & right
-	for (int i = 0; i < 7; ++i) {
-		for (int j = 0; j < 2; ++j) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (0.8f * j), cubeScale * (0.1f + 0.1f * i), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x, wallVec.y - 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-			shaderList[currentShader].setMat4("model", model);
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.8f, wallVec.y - 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	// upper left gap
-	for (int i = 0; i < 3; ++i) {
-		for (int j = 0; j < 2; ++j) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (0.1f * i + 0.1f), cubeScale * (0.5f + 0.1f * j), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.6f, wallVec.y - 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-			shaderList[currentShader].setMat4("model", model);
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.8f, wallVec.y - 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	// upper right gap
-	for (int i = 0; i < 3; ++i) {
-		for (int j = 0; j < 2; ++j) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (0.1f * i + 0.5f), cubeScale * (0.5f + 0.1f * j), 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-			shaderList[currentShader].setMat4("model", model);
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.6f, wallVec.y - 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	// bottom gap
-	for (int i = 0; i < 2; ++i) {
-		for (int j = 0; j < 5; ++j) {
-			model = glm::translate(matrix, glm::vec3(cubeScale * (0.1f * j + 0.2f), cubeScale * (0.1f * i) + 0.1f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));//START OF NEW BLOCK
-			shaderList[currentShader].setMat4("model", model);
-			glDrawArrays(type, 0, 36);
-			model = identMatrix;
-		}
-	}
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.5f, wallVec.y - 0.1f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.1f, wallVec.y - 0.3f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	shaderList[currentShader].setMat4("model", identMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.8f, wallVec.y - 0.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.0f, wallVec.y - 0.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.0f, wallVec.y - 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.8f, wallVec.y + 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.0f, wallVec.y + 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+
+	modelWall = identMatrix;
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.3f, wallVec.y + 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.0f, wallVec.y + 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.2f, wallVec.y + 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.8f, wallVec.y + 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 1.0f, wallVec.y + 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.8f, wallVec.y + 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x, wallVec.y + 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+#pragma endregion
 }
 void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
-	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
-	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
-	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));
-	
-	
-	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
-	glm::mat4 model = glm::scale(matrix, glm::vec3(cubeScale, cubeScale, cubeScale));
-
-	model = identMatrix;
-	//*********************************************************
-	//model
-	//1
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.1f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.1f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.1f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//2
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.2f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//3
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.3f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.3f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.3f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//4
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.4f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//5
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.5f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	textureList[Brick].UseTexture();
-	//*************************************************
-//wall
-//0
-
-
-	model = glm::translate(matrix, glm::vec3(0.0f, 0.0f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, 0.0f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, 0.0f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, 0.0f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, 0.0f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//1
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.1f, cubeScale * 0.3)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.1f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//2
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.2f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.2f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.2f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.2f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//3
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.3f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.3f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//4
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.4f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.4f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.4f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.4f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//5
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.5f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.5f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.5f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.5f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//6
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.6f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.6f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * 0.6f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.1f, cubeScale * 0.6f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * -0.2f, cubeScale * 0.6f, cubeScale * 0.3f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-	shaderList[currentShader].setMat4("model", model);
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	//*********************************************************
-
-
-
-}
-void createAlecCube(float rootAx, float rootAy, float rootAz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+#pragma region Model Junting
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
 	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
 	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
 
-	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootAx, rootAy, rootAz)) * rotationx * rotationy * rotationz;
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
+	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), cubeScale * ThiccCube);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.5f, cubeScale * 0.6f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.5f, cubeScale * 0.8f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.5f, cubeScale * -0.6f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.5f, cubeScale * -0.8f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.5f, cubeScale * 0.0f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.0f, cubeScale * 0.6f)) * glm::scale(glm::mat4(1.0f), cubeScale * BigeCube);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * 0.8f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * -0.6f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+#pragma endregion
+
+#pragma region Wall Junting
+	textureList[Brick].UseTexture();
+	glm::vec3 wallVec = glm::vec3(3.5f, 0.0f, -3.0f);
+	textureList[Brick].UseTexture();
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 1.1f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 1.1f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.9f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 0.9f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.6f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y - 0.6f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.5f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.7f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y - 0.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.2f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.1f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.0f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y + 0.1f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y + 0.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.2f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.0f, wallVec.y + 1.0f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.8f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.6f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+#pragma endregion
+
+
+
+}
+void createAlecCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
+	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
+	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
+#pragma region Model Alec
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
+	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * 0.2f, cubeScale * 0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * -0.2f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * 0.4f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.0f, cubeScale * -0.4f, cubeScale * -0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * 0.2f, cubeScale * -0.1f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * -0.2f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * -0.3f, cubeScale * 0.2f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.4f, cubeScale * -0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * -0.4f, cubeScale * 0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.2f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * -0.2f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.6f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * -0.6f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 1.1f, cubeScale * 0.6f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * 0.8f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.6f, cubeScale * -0.8f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.1f, cubeScale * 0.6f, cubeScale * -0.2f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * 0.8f, cubeScale * 0.1f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.3f, cubeScale * -0.8f, cubeScale * -0.1f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 1.0f, cubeScale * -0.8f, cubeScale * -0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.9f, cubeScale * 0.8f, cubeScale * 0.2f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", model);
+	glDrawArrays(type, 0, 36);
+	model = identMatrix;
+
+#pragma endregion
+#pragma region Wall Alec
+	glm::vec3 wallVec = glm::vec3(0.0f, 0.0f, 0.0f);
+	textureList[Brick].UseTexture();
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y - 1.0f, wallVec.z));
+	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.4f, wallVec.y - 1.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y - 1.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.2f, wallVec.y - 0.8f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.4f, wallVec.y - 0.8f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.2f, wallVec.y - 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y - 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y - 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y - 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y - 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y - 0.2f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.6f, wallVec.y, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.5f, wallVec.y + 0.2, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.0f, wallVec.y + 0.2, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y + 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y + 0.4f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y + 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.4f, wallVec.y + 0.6f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.2f, wallVec.y + 0.8f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.4f, wallVec.y + 0.8f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 0.4f, wallVec.y + 1.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 0.4f, wallVec.y + 1.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 1.2f, wallVec.y + 1.0f, wallVec.z));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+#pragma endregion
+}
+void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+
+#pragma region Cube
+
+	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
+	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
+	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
+
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
 	glm::mat4 model = matrix * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * 0.4f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * 0.5f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
+	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
@@ -1856,9 +2268,7 @@ void createAlecCube(float rootAx, float rootAy, float rootAz, float cubeScale, f
 	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
-
-	//translate comes before scale here so they all move together
-	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.2f), cubeScale * 0.2f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.2f), cubeScale * 0.2f, cubeScale * -0.3f)) * glm::scale(glm::mat4(1.0f), cubeScale * zShortScale);
 	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
@@ -1868,272 +2278,183 @@ void createAlecCube(float rootAx, float rootAy, float rootAz, float cubeScale, f
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
 	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.2f), cubeScale * -0.2f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.4f), cubeScale * (-0.4f), cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.5f), cubeScale * (-0.4f), cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	//translate comes before scale here so they all move together
 	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2f, cubeScale * -0.2f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * -0.4f, cubeScale * 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	model = glm::translate(matrix, glm::vec3(cubeScale * 0.4f, cubeScale * -0.4f, cubeScale * 0.1f)) * glm::scale(glm::mat4(1.0f), cubeScale * zShortScale);
 	shaderList[currentShader].setMat4("model", model);
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
 
-	textureList[Brick].UseTexture();
-	////Alec wall
-	for (int i = 0; i < 7; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * -0.60 + cubeScale * (0.2 * i), cubeScale * -0.6, cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-
-	for (int i = 0; i < 7; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * -0.6 + cubeScale * (0.2 * i), cubeScale * 0.6, cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-
-	for (int i = 0; i < 7; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * -0.6, cubeScale * -0.6 + cubeScale * (0.2 * i), cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-
-	for (int i = 0; i < 7; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * 0.6, cubeScale * -0.6 + cubeScale * (0.2 * i), cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-	for (int i = 0; i < 3; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * -0.4, cubeScale * -0.2 + cubeScale * (0.2 * i), cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-	for (int i = 0; i < 3; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * 0.4, cubeScale * -0.2 + cubeScale * (0.2 * i), cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-	for (int i = 0; i < 3; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * -0.2 + cubeScale * (0.2 * i), cubeScale * -0.4, cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-	for (int i = 0; i < 3; ++i) {
-		model = glm::translate(matrix, glm::vec3(cubeScale * (-0.2) + cubeScale * (0.2 * i), cubeScale * 0.4, cubeScale * -0.50f)) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-		glDrawArrays(type, 0, 36);
-		model = identMatrix;
-	}
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * 0.2, cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(0.0f, cubeScale * (-0.2), cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-
-	model = glm::translate(matrix, glm::vec3(cubeScale * 0.2, 0.0f, cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-	model = glm::translate(matrix, glm::vec3(cubeScale * (-0.2), 0.0f, cubeScale * (-0.50f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", model); //updating matrix in shader
-	glDrawArrays(type, 0, 36);
-	model = identMatrix;
-}
-void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
-
-	float cubeScaled = cubeScale * 0.2f;
-
-	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
-	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 1, 0));
-	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 0, 1));
-
-	glm::mat4 baseMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(rootx, rooty, rootz)) * rotationx * rotationy * rotationz;
-	glm::mat4 aCubeMatrix;
-
-#pragma region Cube
-
-
-
-	for (float i = 0.0f; i < 5; i++)
-	{
-		for (float j = 0; j < 5; j++)
-		{
-			aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i), 0, cubeScaled * (+j))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", aCubeMatrix);
-			glDrawArrays(type, 0, 36);
-			aCubeMatrix = glm::mat4(1.0f);
-		}
-	}
-
-	for (float i = 0.0f; i < 3; i++)
-	{
-
-		for (float j = 0; j < 3; j++)
-		{
-			aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i + 1.0f),cubeScaled * (+1.0f), cubeScaled * (+j + 1.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", aCubeMatrix);
-			glDrawArrays(type, 0, 36);
-			aCubeMatrix = glm::mat4(1.0f);
-		}
-	}
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+2.0f),cubeScaled * (+2.0f), cubeScaled * (+2.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
-	glDrawArrays(type, 0, 36);
-	aCubeMatrix = glm::mat4(1.0f);
-
-	for (float i = 0.0f; i < 3; i++)
-	{
-
-		for (float j = 0; j < 3; j++)
-		{
-			aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i + 1.0f), cubeScaled * (+3.0f), cubeScaled * (+j + 1.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", aCubeMatrix);
-			glDrawArrays(type, 0, 36);
-			aCubeMatrix = glm::mat4(1.0f);
-		}
-	}
-
-	for (float i = 0.0f; i < 5; i++)
-	{
-
-		for (float j = 0; j < 5; j++)
-		{
-			aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i), cubeScaled * (+4.0f), cubeScaled * (+j))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-			shaderList[currentShader].setMat4("model", aCubeMatrix);
-			glDrawArrays(type, 0, 36);
-			aCubeMatrix = glm::mat4(1.0f);
-		}
-	}
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+2.0f), cubeScaled * (+5.0f), cubeScaled * (+2.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
-	glDrawArrays(type, 0, 36);
-	aCubeMatrix = glm::mat4(1.0f);
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+2.0f), cubeScaled * (+6.0f), cubeScaled * (+2.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
-	glDrawArrays(type, 0, 36);
-	aCubeMatrix = glm::mat4(1.0f);
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+3.0f), cubeScaled * (+6.0f), cubeScaled * (+2.0f))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
-	glDrawArrays(type, 0, 36);
-	aCubeMatrix = glm::mat4(1.0f);
-
 #pragma endregion
 
-#pragma region Wall
+#pragma region Wall Paul
 
 	textureList[Brick].UseTexture();
-	float DITANCEFROMCUBE = -3.0f;
 
-
-	for (float i = 0; i < 7; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i - 1.0f), cubeScaled * (-1.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix); //you tell shader what matrix should be changed to
-		glDrawArrays(type, 0, 36);
-	}
-
-
-
-	for (float i = 0; i < 7; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+i - 1.0f), cubeScaled * (7.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix);
-		glDrawArrays(type, 0, 36);
-	}
-
-	for (float i = 0; i < 7; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (-1.0f), cubeScaled * (i), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix);
-		glDrawArrays(type, 0, 36);
-	}
-
-	for (float i = 0; i < 7; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (+5.0f), cubeScaled * (i), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix);
-		glDrawArrays(type, 0, 36);
-	}
-
-	for (float i = 0; i < 3; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (0), cubeScaled * (i + 1.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix);
-		glDrawArrays(type, 0, 36);
-	}
-
-	for (float i = 0; i < 3; i++)
-	{
-		aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (4.0f), cubeScaled * (i + 1.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-		shaderList[currentShader].setMat4("model", aCubeMatrix);
-		glDrawArrays(type, 0, 36);
-	}
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (1.0f), cubeScaled * (2.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	glm::vec3 wallVec = glm::vec3(-3.5f, 0.0f, -3.5f);
+	textureList[Brick].UseTexture();
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.6f, wallVec.z + 3.5));
+	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (3.0f), cubeScaled * (2.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y - 0.6f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (1.0f), cubeScaled * (5.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.7f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (0.0f), cubeScaled * (5.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (1.0f), cubeScaled * (6.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (0.0f), cubeScaled * (6.0f),cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (3.0f), cubeScaled * (5.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
-
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (3.0f), cubeScaled * (5.0f), cubeScaled * (DITANCEFROMCUBE ))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (4.0f), cubeScaled * (5.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
-	aCubeMatrix = baseMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(cubeScaled * (4.0f), cubeScaled * (6.0f), cubeScaled * (DITANCEFROMCUBE))) * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
-	shaderList[currentShader].setMat4("model", aCubeMatrix);
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.0f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.0f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.6f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.8f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
+
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y + 0.8f, wallVec.z + 3.5));
+	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
+	shaderList[currentShader].setMat4("model", modelWall);
+	glDrawArrays(type, 0, 36);
+	modelWall = identMatrix;
 
 #pragma endregion
 

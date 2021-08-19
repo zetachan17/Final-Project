@@ -13,8 +13,6 @@ using namespace irrklang;
 
 ISoundEngine* SoundEngine = createIrrKlangDevice();
 
-//Model UFO("Assignment1/src/Models/backpack.obj");
-
 // Handle keyboard input
 void processInput(GLFWwindow* window);
 
@@ -23,8 +21,10 @@ const GLint WIDTH = 1024, HEIGHT = 768;
 //Rotations use radians (convert degrees to radians)
 const float toRadians = 3.14159265 / 180.0f;
 const int numGridLines = 100;
+
 // camera
-Camera camera = Camera(glm::vec3(-5.0f, 3.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f), -50.0f, -20.0f);
+Camera camera = Camera(glm::vec3(-6.0f, 4.0f, 7.0f), glm::vec3(0.0f, 1.0f, 0.0f), -40.0f, -20.0f);
+Camera camera2 = Camera(glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, -90.0f);
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -50,6 +50,8 @@ struct Character {
 std::map<GLchar, Character> Characters;
 
 float ambientStrength = 0.3f;
+int second = 0;
+int score = 0;
 
 // Texture enumerator
 enum textures {
@@ -57,24 +59,27 @@ enum textures {
 	RoseGold = 3, TealMetal = 4, Brick = 5, Tile = 6, Sky = 7
 };
 
+#pragma region Function declares
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-
-int modelRendered = 0;
-
-void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
-void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
-void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
-void createAlecCube(float rootAx, float rootAy, float rootAz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
-void createRunzeCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
+void passThrough();
+bool check();
+void createCube1(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
+void createCube5(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
+void createCube3(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
+void createCube4(float rootAx, float rootAy, float rootAz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
+void createCube2(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type);
 void RenderText(Shader& shader, std::string text, float i, float x, float y, float scale, glm::vec3 color);
+void move();
+bool isinwall();
+#pragma endregion
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+int modelRendered = 0;
 
 GLenum type = GL_TRIANGLES;
 
@@ -116,44 +121,16 @@ bool sizeDirection = true;
 
 #pragma region Roots
 
+float rootx = 0.0f;
+float rooty = 0.0f;
+float rootz = 5.0f;
+float anglex = 0.0f;
+float anglez = 0.0f;
+float angley = 0.0f;
+
 float curSize = 0.4f;
 float maxSize = 0.8f;
 float minSize = 0.1f;
-
-float rootAlecx = 0.0f;
-float rootAlecy = 0.0f;
-float rootAlecz = 5.0f;
-float angleAlecx = 0.0f;
-float angleAlecz = 0.0f;
-float angleAlecy = 0.0f;
-
-float rootPaulx = 0.0f;
-float rootPauly = 0.0f;
-float rootPaulz = 5.0f;
-float anglePaulx = 0.0f;
-float anglePaulz = 0.0f;
-float anglePauly = 0.0f;
-
-float rootJennax = 0.0f;
-float rootJennay = 0.0f;
-float rootJennaz = 5.0f;
-float angleJennax = 0.0f;
-float angleJennaz = 0.0f;
-float angleJennay = 0.0f;
-
-float rootRunzex = 0.0f;
-float rootRunzey = 0.0;
-float rootRunzez = 5.0f;
-float angleRunzex = 0.0f;
-float angleRunzez = 0.0f;
-float angleRunzey = 0.0f;
-
-float rootJungtingx = 0.0f;
-float rootJungtingy = 0.0f;
-float rootJungtingz = 5.0f;
-float angleJungtingx = 0.0f;
-float angleJungtingz = 0.0f;
-float angleJungtingy = 0.0f;
 
 bool isMovingBackward = false;
 bool isMovingForward = false;
@@ -178,9 +155,11 @@ float runzeScale = 1.0f;
 float alecScale = 1.0f;
 
 enum modelSelected { PaulModel, RunzeModel, JennaModel, JungtingModel, AlecModel };
+enum cameraSelected {mainCamera, menuCamera};
 enum rotateDirection { UPDIR, DOWNDIR, LEFTDIR, RIGHTDIR, NONE };
 
 modelSelected currentModel = JungtingModel;
+cameraSelected currentCamera = menuCamera;
 
 float modelAngle = 0;
 float MODANGLE = 90;
@@ -353,45 +332,37 @@ void CreateAndLoadTextures() {
 
 void RenderScene(int shaderIndex) {
 
-	//shaderList[shaderIndex].useShader();
-
-	// Skybox
-	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(150.0f, 150.0f, 150.0f));
-	//shaderList[0].setMat4("model", model); //you tell shader what matrix should be changed to
-	//textureList[Sky].UseTexture();
-	//glDrawArrays(type, 0, 36);
-	//model = identMatrix;
-
 	//Floor
-
+	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(150.0f, 0.1f, 150.0f));
 	shaderList[0].setMat4("model", model); //you tell shader what matrix should be changed to
 	textureList[Tile].UseTexture();
 	glDrawArrays(type, 0, 36);
 	model = identMatrix;
+	move();
+	passThrough();
 
 	switch (modelRendered)
 	{
 		case 0:
 			textureList[GreenMetal].UseTexture();
-			createPaulCube(rootPaulx, rootPauly, rootPaulz, paulScale, anglePaulx, anglePaulz, anglePauly, paulType);
+			createCube5(rootx, rooty, rootz, paulScale, anglex, anglez, angley, paulType);
 			break;
 		case 1:
 			textureList[TealMetal].UseTexture();
-			createRunzeCube(rootRunzex, rootRunzey, rootRunzez, runzeScale, angleRunzex, angleRunzez, angleRunzey, runzeType);
+			createCube2(rootx, rooty, rootz, runzeScale, anglex, anglez, angley, runzeType);
 			break;
 		case 2:
 			textureList[BlueMetal].UseTexture();
-			createJuntingCube(rootJungtingx, rootJungtingy, rootJungtingz, jungtingScale, angleJungtingx, angleJungtingz, angleJungtingy, juntingType);
+			createCube3(rootx, rooty, rootz, jungtingScale, anglex, anglez, angley, juntingType);
 			break;
 		case 3:
 			textureList[RoseGold].UseTexture();
-			createJennaCube(rootJennax, rootJennay, rootJennaz, jennaScale, angleJennax, angleJennaz, angleJennay, jennaType);
+			createCube1(rootx, rooty, rootz, jennaScale, anglex, anglez, angley, jennaType);
 			break;
 		case 4:
 			textureList[Gold].UseTexture();
-			createAlecCube(rootAlecx, rootAlecy, rootAlecz, alecScale, angleAlecx, angleAlecz, angleAlecy, alecType);
+			createCube4(rootx, rooty, rootz, alecScale, anglex, anglez, angley, alecType);
 			break;
 	}
 }
@@ -528,12 +499,11 @@ int main()
 	}
 
 	// tell GLFW to capture our mouse
-	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	glfwSetCursorPosCallback(mainWindow, mouse_callback);
 	glfwSetScrollCallback(mainWindow, scroll_callback);
 	glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback);
-	glfwSetKeyCallback(mainWindow, key_callback);
 
 	//STEP 8: SET UP DEPTH BUFFER / ENABLE OUR DEPTH TEST
 	glEnable(GL_DEPTH_TEST);
@@ -583,7 +553,7 @@ int main()
 	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
 
 	//SoundEngine->play2D("Assignment1/src/Music/breakout.mp3", true);
-	Model UFO("Assignment1/src/Models/backpack.obj");
+	Model UFO("Assignment1/src/Models/Low_poly_UFO.obj");
 
 	// Implement ImGui
 	IMGUI_CHECKVERSION();
@@ -592,8 +562,6 @@ int main()
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
-
-
 
 	//Loop until window closed
 	while (!glfwWindowShouldClose(mainWindow)) {
@@ -609,7 +577,6 @@ int main()
 
 		// input
 		// -----
-		//processInput(welcomeWindow);
 		processInput(mainWindow);
 
 		//Clear window (make a light blue background) Last Value: alpha/ Transparent vs Opaque
@@ -629,21 +596,32 @@ int main()
 		shaderList[0].useShader();
 
 		// create transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-		shaderList[0].setMat4("projection", projection);
+		glm::mat4 projection;
+		glm::mat4 view;
 
-		// camera/view transformation
-		glm::mat4 view = camera.GetViewMatrix();
-		shaderList[0].setMat4("view", view);
+		switch (currentCamera)
+		{
+		case mainCamera:
+			projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+			shaderList[0].setMat4("projection", projection);
+			view = camera.GetViewMatrix();
+			shaderList[0].setMat4("view", view);
+			shaderList[0].setMat4("projection", projection);
+			break;
+		case menuCamera:
+			projection = glm::perspective(glm::radians(camera2.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+			shaderList[0].setMat4("projection", projection);
+			view = camera2.GetViewMatrix();
+			shaderList[0].setMat4("view", view);
+			shaderList[0].setMat4("projection", projection);
+			break;
+		}
 
 		// note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-		shaderList[0].setMat4("projection", projection);
+		
 
 		glm::mat4 model = identMatrix; // make sure to initialize matrix to identity matrix first
 
-#pragma region Create Models
-
-		// Skybox
 #pragma region Create Models
 
 		float near_plane = 1.0f, far_plane = 7.5f;
@@ -677,7 +655,7 @@ int main()
 		shaderList[currentShader].setMat4("lightSpaceMatrix", lightSpaceMatrix);
 		shaderList[currentShader].setVec3("viewPos", glm::vec3(0.0f, 5.0f, 0.0f)); //for specular lighting
 		//load shader for light
-		shaderList[currentShader].setFloat("ambientStrength", 0.3f);
+		shaderList[currentShader].setFloat("ambientStrength", ambientStrength);
 		shaderList[currentShader].setVec3("lightPosition", pointLightSource.position);
 		shaderList[currentShader].setVec3("lightDirection", pointLightSource.direction);
 		shaderList[currentShader].setVec3("lightColour", pointLightSource.color);
@@ -688,7 +666,6 @@ int main()
 
 #pragma endregion
 
-#pragma endregion
 		
 		//Unnasign the shader
 		glUseProgram(0);
@@ -715,40 +692,88 @@ int main()
 		glm::mat4 projection2 = glm::ortho(0.0f, static_cast<float>(WIDTH), 0.0f, static_cast<float>(HEIGHT));
 		shaderList[3].setMat4("projection", projection2);
 
-		RenderText(shaderList[3], "Test1", ambientStrength, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-		RenderText(shaderList[3], "Test2", movingSpeed, 540.0f, 540.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+		//RenderText(shaderList[3], "Test1", ambientStrength, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+		//RenderText(shaderList[3], "Test2", movingSpeed, 540.0f, 540.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
 
 		glUseProgram(0);
 
 		// render the loaded model
 		shaderList[4].useShader();
-
-		glm::mat4 projectionModel = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 viewModel = camera.GetViewMatrix();
-		shaderList[4].setMat4("projection", projectionModel);
-		shaderList[4].setMat4("view", viewModel);
+		glm::mat4 projectionModel;
+		glm::mat4 viewModel;
+		switch (currentCamera)
+		{
+		case mainCamera:
+			projectionModel = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+			viewModel = camera.GetViewMatrix();
+			shaderList[4].setMat4("projection", projectionModel);
+			shaderList[4].setMat4("view", viewModel);
+			break;
+		case menuCamera:
+			projectionModel = glm::perspective(glm::radians(camera2.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+			viewModel = camera2.GetViewMatrix();
+			shaderList[4].setMat4("projection", projectionModel);
+			shaderList[4].setMat4("view", viewModel);
+			break;
+		}
 		
 		glm::mat4 modelModel = glm::mat4(1.0f);
-		modelModel = glm::translate(modelModel, glm::vec3(0.0f, 4.0f, 0.0f)); // translate it down so it's at the center of the scene
-		modelModel = glm::scale(modelModel, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
+		modelModel = glm::translate(modelModel, glm::vec3(0.5f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
+		modelModel = glm::scale(modelModel, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
 		shaderList[4].setMat4("model", modelModel);
 		UFO.Draw(shaderList[4]);
 
 		//Unnasign the shader
 		glUseProgram(0);
 
+		second = 40 - (int)round(glfwGetTime());
 
-		ImGui::Begin("Settings");
-		ImGui::Text("Diffculity");
-		ImGui::SliderFloat("Speed", &movingSpeed, 0.01, 0.05);
-		ImGui::Text(" ");
-		ImGui::Text("General");
-		ImGui::SliderFloat("Brightness", &ambientStrength, 0.0f, 1.0f);
-		
-		ImGui::End();
+		if (second <= 0) {
+			second = 0;
+			ImGui::Begin("Timers Up!");
+			ImGui::Text("Your final score is: %d", score);
+			ImGui::Text("Thanks for playing!");
+			ImGui::End();
+			movingSpeed = 0.0f;
+		}
+		switch (currentCamera)
+		{
+		case mainCamera:
+			ImGui::Begin("Settings");
+			ImGui::Text("Diffculity");
+			ImGui::SliderFloat("Speed", &movingSpeed, 0.01, 0.05);
+			ImGui::Text(" ");
+			ImGui::Text("General");
+			ImGui::SliderFloat("Brightness", &ambientStrength, 0.0f, 1.0f);
+			ImGui::End();
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			ImGui::Begin("Timer");
+			ImGui::Text("%d", second);
+			ImGui::End();
+
+			ImGui::Begin("Score");
+			ImGui::Text("Score: %d", score);
+			ImGui::End();
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			break;
+		case menuCamera:
+			ImGui::Begin("		Welcome");
+			ImGui::Text("		COMP 371 Final Project");
+			ImGui::Text("	Team 10 A+ Squad");
+			ImGui::Text("	Completed by:");
+			ImGui::Text("	Alec Arakilyan");
+			ImGui::Text("	Iphigenia Jenna Pappas");
+			ImGui::Text("	Paul Grippa Vento");
+			ImGui::Text("	Junting Ye");
+			ImGui::Text("	Runze Zhu");
+			ImGui::Text(" ");
+			ImGui::Text("	Press Enter to start the Game");
+			ImGui::End();
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			break;
+		}
 
 		glfwSwapBuffers(mainWindow);
 
@@ -771,15 +796,59 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+		currentCamera = mainCamera;
+
 	float cameraSpeed = 2.5 * deltaTime;
+
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
+	{
+		switch (currentCamera)
+		{
+		case mainCamera:
+			camera.ProcessKeyboard(FORWARD, deltaTime);
+			break;
+		case menuCamera:
+			camera2.ProcessKeyboard(FORWARD, deltaTime);
+			break;
+		}
+	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	{
+		switch (currentCamera)
+		{
+		case mainCamera:
+			camera.ProcessKeyboard(BACKWARD, deltaTime);
+			break;
+		case menuCamera:
+			camera2.ProcessKeyboard(BACKWARD, deltaTime);
+			break;
+		}
+	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
+	{
+		switch (currentCamera)
+		{
+		case mainCamera:
+			camera.ProcessKeyboard(LEFT, deltaTime);
+			break;
+		case menuCamera:
+			camera2.ProcessKeyboard(LEFT, deltaTime);
+			break;
+		}
+	}
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
+	{
+		switch (currentCamera)
+		{
+		case mainCamera:
+			camera.ProcessKeyboard(RIGHT, deltaTime);
+			break;
+		case menuCamera:
+			camera2.ProcessKeyboard(RIGHT, deltaTime);
+			break;
+		}
+	}
 
 #pragma region Model Change
 
@@ -816,105 +885,24 @@ void processInput(GLFWwindow* window)
 	if (isRotating) {
 		modelAngle += 10.0f;
 
-		switch (currentModel) {
-
-		case JungtingModel:
-			switch (currentDirection)
-			{
-			case UPDIR:
-				angleJungtingx -= 10;
-				break;
-			case DOWNDIR:
-				angleJungtingx += 10;
-				break;
-			case LEFTDIR:
-				angleJungtingy -= 10.0f;
-				break;
-			case RIGHTDIR:
-				angleJungtingy += 10.0f;
-				break;
-			}
-			angleJungtingy = fmod(angleJungtingy, FULLANGLE);
-			angleJungtingx = fmod(angleJungtingx, FULLANGLE);
+		switch (currentDirection)
+		{
+		case UPDIR:
+			anglex -= 10;
 			break;
-		case PaulModel:
-			switch (currentDirection)
-			{
-			case UPDIR:
-				anglePaulx -= 10;
-				break;
-			case DOWNDIR:
-				anglePaulx += 10;
-				break;
-			case LEFTDIR:
-				anglePauly -= 10.0f;
-				break;
-			case RIGHTDIR:
-				anglePauly += 10.0f;
-				break;
-			}
-			anglePaulx = fmod(anglePaulx, FULLANGLE);
-			anglePauly = fmod(anglePauly, FULLANGLE);
+		case DOWNDIR:
+			anglex += 10;
 			break;
-		case JennaModel:
-			switch (currentDirection)
-			{
-			case UPDIR:
-				angleJennax -= 10;
-				break;
-			case DOWNDIR:
-				angleJennax += 10;
-				break;
-			case LEFTDIR:
-				angleJennay -= 10.0f;
-				break;
-			case RIGHTDIR:
-				angleJennay += 10.0f;
-				break;
-			}
-			angleJennax = fmod(angleJennax, FULLANGLE);
-			angleJennay = fmod(angleJennay, FULLANGLE);
+		case LEFTDIR:
+			angley -= 10.0f;
 			break;
-		case RunzeModel:
-			switch (currentDirection)
-			{
-			case UPDIR:
-				angleRunzex -= 10;
-				break;
-			case DOWNDIR:
-				angleRunzex += 10;
-				break;
-			case LEFTDIR:
-				angleRunzey -= 10.0f;
-				break;
-			case RIGHTDIR:
-				angleRunzey += 10.0f;
-				break;
-			}
-			angleRunzex = fmod(angleRunzex, FULLANGLE);
-			angleRunzey = fmod(angleRunzey, FULLANGLE);
-			break;
-		case AlecModel:
-			switch (currentDirection)
-			{
-			case UPDIR:
-				angleAlecx -= 10;
-				break;
-			case DOWNDIR:
-				angleAlecx += 10;
-
-				break;
-			case LEFTDIR:
-				angleAlecy -= 10.0f;
-				break;
-			case RIGHTDIR:
-				angleAlecy += 10.0f;
-				break;
-			}
-			angleAlecx = fmod(angleAlecx, FULLANGLE);
-			angleAlecy = fmod(angleAlecy, FULLANGLE);
+		case RIGHTDIR:
+			angley += 10.0f;
 			break;
 		}
+		angley = fmod(angley, FULLANGLE);
+		anglex = fmod(anglex, FULLANGLE);
+
 		modelAngle = fmod(modelAngle, 90);
 		isRotating = modelAngle != 0;
 	}
@@ -953,19 +941,19 @@ void processInput(GLFWwindow* window)
 	{
 		switch (currentModel) {
 		case JungtingModel:
-			angleJungtingz -= 5.0f;
+			anglez -= 5.0f;
 			break;
 		case PaulModel:
-			anglePaulz -= 5.0f;
+			anglez -= 5.0f;
 			break;
 		case JennaModel:
-			angleJennaz -= 5.0f;
+			anglez -= 5.0f;
 			break;
 		case RunzeModel:
-			angleRunzez -= 5.0f;
+			anglez -= 5.0f;
 			break;
 		case AlecModel:
-			angleAlecz -= 5.0f;
+			anglez -= 5.0f;
 			break;
 		}
 	}
@@ -974,361 +962,23 @@ void processInput(GLFWwindow* window)
 	{
 		switch (currentModel) {
 		case JungtingModel:
-			angleJungtingz += 5.0f;
+			anglez += 5.0f;
 			break;
 		case PaulModel:
-			anglePaulz += 5.0f;
+			anglez += 5.0f;
 			break;
 		case JennaModel:
-			angleJennaz += 5.0f;
+			anglez += 5.0f;
 			break;
 		case RunzeModel:
-			angleRunzez += 5.0f;
+			anglez += 5.0f;
 			break;
 		case AlecModel:
-			angleAlecz += 5.0f;
+			anglez += 5.0f;
 			break;
 		}
 	}
-
-
-
 #pragma endregion
-
-	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-		// Turn Textures On/Off
-
-		textureEn = !textureEn;
-		if (!textureEn)
-			glDisable(GL_TEXTURE_2D);
-		else
-			glEnable(GL_TEXTURE_2D);
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingy += 0.01f;
-			break;
-		case PaulModel:
-			rootPauly += 0.01f;
-			break;
-		case JennaModel:
-			rootJennay += 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzey += 0.01f;
-			break;
-		case AlecModel:
-			rootAlecy += 0.01f;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingy -= 0.01f;
-			break;
-		case PaulModel:
-			rootPauly -= 0.01f;
-			break;
-		case JennaModel:
-			rootJennay -= 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzey -= 0.01f;
-			break;
-		case AlecModel:
-			rootAlecy -= 0.01f;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingx += 0.01f;
-			break;
-		case PaulModel:
-			rootPaulx += 0.01f;
-			break;
-		case JennaModel:
-			rootJennax += 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzex += 0.01f;
-			break;
-		case AlecModel:
-			rootAlecx += 0.01f;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingx -= 0.01f;
-			break;
-		case PaulModel:
-			rootPaulx -= 0.01f;
-			break;
-		case JennaModel:
-			rootJennax -= 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzex -= 0.01f;
-			break;
-		case AlecModel:
-			rootAlecx -= 0.01f;
-			break;
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-	{
-
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingz += 0.01f;
-			break;
-		case PaulModel:
-			rootPaulz += 0.01f;
-			break;
-		case JennaModel:
-			rootJennaz += 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzez += 0.01f;
-			break;
-		case AlecModel:
-			rootAlecz += 0.01f;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingz -= movingSpeed;
-			break;
-		case PaulModel:
-			rootPaulz -= movingSpeed;
-			break;
-		case JennaModel:
-			rootJennaz -= movingSpeed;
-			break;
-		case RunzeModel:
-			rootRunzez -= movingSpeed;
-			break;
-		case AlecModel:
-			rootAlecz -= movingSpeed;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
-	{
-		isMovingBackward = !isMovingBackward;
-	}
-
-	if (isMovingBackward) {
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingz -= movingSpeed;
-			break;
-		case PaulModel:
-			rootPaulz -= movingSpeed;
-			break;
-		case JennaModel:
-			rootJennaz -= movingSpeed;
-			break;
-		case RunzeModel:
-			rootRunzez -= movingSpeed;
-			break;
-		case AlecModel:
-			rootAlecz -= movingSpeed;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-	{
-		isMovingForward = !isMovingForward;
-	}
-
-	if (isMovingForward) {
-		switch (currentModel) {
-		case JungtingModel:
-			rootJungtingz += 0.01f;
-			break;
-		case PaulModel:
-			rootPaulz += 0.01f;
-			break;
-		case JennaModel:
-			rootJennaz += 0.01f;
-			break;
-		case RunzeModel:
-			rootRunzez += 0.01f;
-			break;
-		case AlecModel:
-			rootAlecz += 0.01f;
-			break;
-
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
-	{
-		isShadow = !isShadow;
-	}
-
-	// rotate
-
-	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			jungtingScale += 0.005f;
-			break;
-		case PaulModel:
-			paulScale += 0.005f;
-			break;
-		case JennaModel:
-			jennaScale += 0.005f;
-			break;
-		case RunzeModel:
-			runzeScale += 0.005f;
-			break;
-		case AlecModel:
-			alecScale += 0.005f;
-			break;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-	{
-		switch (currentModel) {
-		case JungtingModel:
-			jungtingScale -= 0.005f;
-			break;
-		case PaulModel:
-			paulScale -= 0.005f;
-			break;
-		case JennaModel:
-			jennaScale -= 0.005f;
-			break;
-		case RunzeModel:
-			runzeScale -= 0.005f;
-			break;
-		case AlecModel:
-			alecScale -= 0.005f;
-			break;
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-		switch (currentModel) {
-		case JungtingModel:
-			juntingType = GL_POINTS;
-			break;
-		case PaulModel:
-			paulType = GL_POINTS;
-			break;
-		case JennaModel:
-			jennaType = GL_POINTS;;
-			break;
-		case RunzeModel:
-			runzeType = GL_POINTS;
-			break;
-		case AlecModel:
-			alecType = GL_POINTS;
-			break;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-		switch (currentModel) {
-		case JungtingModel:
-			juntingType = GL_LINES;
-			break;
-		case PaulModel:
-			paulType = GL_LINES;
-			break;
-		case JennaModel:
-			jennaType = GL_LINES;;
-			break;
-		case RunzeModel:
-			runzeType = GL_LINES;
-			break;
-		case AlecModel:
-			alecType = GL_LINES;
-			break;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-		switch (currentModel) {
-		case JungtingModel:
-			juntingType = GL_TRIANGLES;
-			break;
-		case PaulModel:
-			paulType = GL_TRIANGLES;
-			break;
-		case JennaModel:
-			jennaType = GL_TRIANGLES;
-			break;
-		case RunzeModel:
-			runzeType = GL_TRIANGLES;
-			break;
-		case AlecModel:
-			alecType = GL_TRIANGLES;
-			break;
-		}
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS)
-	{
-		rootAlecx = -3.5f;
-		rootAlecy = 0.0;
-		rootAlecz = -3.0f;
-		angleAlecx = 0.0f;
-
-		rootPaulx = 3.5f;
-		rootPauly = 0.0f;
-		rootPaulz = 3.5f;
-		anglePaulx = 0.0f;
-
-		rootJennax = 3.5f;
-		rootJennay = 0.0f;
-		rootJennaz = -3.5f;
-		angleJennax = 0.0f;
-
-		rootRunzex = -3.5f;
-		rootRunzey = 0.0;
-		rootRunzez = 3.5f;
-		angleRunzex = 0.0f;
-
-		rootJungtingx = 0.0f;
-		rootJungtingy = 0.0f;
-		rootJungtingz = 0.0f;
-		angleJungtingx = 0.0f;
-
-		paulType = GL_TRIANGLES;
-		alecType = GL_TRIANGLES;
-		runzeType = GL_TRIANGLES;
-		juntingType = GL_TRIANGLES;
-		jennaType = GL_TRIANGLES;
-
-	}
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -1352,8 +1002,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	yoffset *= sensitivity;
 
 
-
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	switch (currentCamera)
+	{
+	case mainCamera:
+		camera.ProcessMouseMovement(xoffset, yoffset);
+		break;
+	case menuCamera:
+		camera2.ProcessMouseMovement(xoffset, yoffset);
+		break;
+	}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -1370,14 +1027,32 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(yoffset);
+	switch (currentCamera)
+	{
+	case mainCamera:
+		camera.ProcessMouseScroll(yoffset);
+		break;
+	case menuCamera:
+		camera2.ProcessMouseScroll(yoffset);
+		break;
+	}
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void passThrough()
 {
-	if (key == GLFW_KEY_7 && action == GLFW_PRESS) {
-		modelRendered = rand() % 5;
+	if (isinwall()) {
+		if (check()) {
+			score += 10;
+		}
 
+		modelRendered = rand() % 5;
+		rootx = 0.0f;
+		rooty = 0.0f;
+		rootz = 5.0f;
+
+		anglex = 0.0f;
+		anglez = 0.0f;
+		angley = 0.0f;
 		switch (modelRendered)
 		{
 		case 0:
@@ -1399,10 +1074,26 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
+bool check() {
+	return anglex == 0 && angley == 0 and anglez == 0;
+}
 
+void move() {
+	if (currentCamera == mainCamera) {
+		rootz -= movingSpeed;
+	}
+	else
+	{
+		rootz == 0.0f;
+	}
+}
+
+bool isinwall() {
+	return rootz <= 0.1;
+}
 #pragma region Model Creation
 
-void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+void createCube1(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
 
 
@@ -1528,7 +1219,7 @@ void createJennaCube(float rootx, float rooty, float rootz, float cubeScale, flo
 #pragma endregion
 
 }
-void createRunzeCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+void createCube2(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
 	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
@@ -1702,7 +1393,7 @@ void createRunzeCube(float rootx, float rooty, float rootz, float cubeScale, flo
 	modelWall = identMatrix;
 #pragma endregion
 }
-void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+void createCube3(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
 #pragma region Model Junting
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
@@ -1758,214 +1449,214 @@ void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, f
 
 #pragma region Wall Junting
 	textureList[Brick].UseTexture();
-	glm::vec3 wallVec = glm::vec3(3.5f, 0.0f, -3.0f);
+	glm::vec3 wallVec = glm::vec3(3.5f, 0.0f, 0.0);
 	textureList[Brick].UseTexture();
-	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y - 1.3f, wallVec.z));
 	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y - 1.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y - 1.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y - 1.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y - 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y - 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y - 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y - 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 1.1f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 1.1f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 1.1f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 1.1f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.9f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.9f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 0.9f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y - 0.9f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.6f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y - 0.6f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y - 0.6f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y - 0.6f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.5f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.5f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.7f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.7f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y - 0.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y - 0.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.2f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y - 0.2f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.1f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y - 0.1f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.0f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.0f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y + 0.1f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.5f, wallVec.y + 0.1f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y + 0.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.7f, wallVec.y + 0.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.2f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.2f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.1f, wallVec.y + 0.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 4.2f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.8f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.7f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.3f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.2f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.0f, wallVec.y + 1.0f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.0f, wallVec.y + 1.0f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.8f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.8f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.6f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.6f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y + 0.8f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.4f, wallVec.y + 0.8f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * yLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.9f, wallVec.y + 1.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 3.1f, wallVec.y + 1.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y + 1.3f, wallVec.z + 3.0));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x - 2.3f, wallVec.y + 1.3f, wallVec.z + 0.0));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
@@ -1975,7 +1666,7 @@ void createJuntingCube(float rootx, float rooty, float rootz, float cubeScale, f
 
 
 }
-void createAlecCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+void createCube4(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 	glm::mat4 rotationx = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglex), glm::vec3(1, 0, 0));
 	glm::mat4 rotationy = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAngley), glm::vec3(0, 1, 0));
 	glm::mat4 rotationz = glm::rotate(glm::mat4(1.0f), glm::radians(spinningCubeAnglez), glm::vec3(0, 0, 1));;
@@ -2240,7 +1931,7 @@ void createAlecCube(float rootx, float rooty, float rootz, float cubeScale, floa
 	modelWall = identMatrix;
 #pragma endregion
 }
-void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
+void createCube5(float rootx, float rooty, float rootz, float cubeScale, float spinningCubeAnglex, float spinningCubeAnglez, float spinningCubeAngley, GLenum type) {
 
 #pragma region Cube
 
@@ -2304,153 +1995,153 @@ void createPaulCube(float rootx, float rooty, float rootz, float cubeScale, floa
 
 	textureList[Brick].UseTexture();
 
-	glm::vec3 wallVec = glm::vec3(-3.5f, 0.0f, -3.5f);
+	glm::vec3 wallVec = glm::vec3(-3.5f, 0.0f, 0.0f);
 	textureList[Brick].UseTexture();
-	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.6f, wallVec.z + 3.5));
+	glm::mat4 matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.6f, wallVec.z));
 	glm::mat4 modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y - 0.6f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y - 0.6f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.7f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.7f, wallVec.y - 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y - 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y - 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y - 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y - 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y - 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y - 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y - 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.0f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y - 0.0f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.0f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y - 0.0f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.1f, wallVec.y + 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.5f, wallVec.y + 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y + 0.2f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.0f, wallVec.y + 0.2f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 2.8f, wallVec.y + 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.4f, wallVec.y + 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.7f, wallVec.y + 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.4f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.4f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.6f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.6f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.6f, wallVec.y + 0.6f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xShortScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.6f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 4.1f, wallVec.y + 0.6f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), glm::vec3(cubeScale, cubeScale, cubeScale));
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.8f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.0f, wallVec.y + 0.8f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
 	modelWall = identMatrix;
 
-	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y + 0.8f, wallVec.z + 3.5));
+	matrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(wallVec.x + 3.8f, wallVec.y + 0.8f, wallVec.z));
 	modelWall = matrix2 * glm::scale(glm::mat4(1.0f), cubeScale * xLongScale);
 	shaderList[currentShader].setMat4("model", modelWall);
 	glDrawArrays(type, 0, 36);
@@ -2511,6 +2202,9 @@ void RenderText(Shader& shader, std::string text, float i, float x, float y, flo
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void showHUD() {
+
+}
 //useless
 /*
 static void ShowExampleAppSimpleOverlay(bool* p_open)
