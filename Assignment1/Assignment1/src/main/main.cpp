@@ -552,7 +552,10 @@ int main()
 
 	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
 
-	//SoundEngine->play2D("Assignment1/src/Music/breakout.mp3", true);
+	if (currentCamera == menuCamera) {
+		SoundEngine->play2D("Assignment1/src/Music/breakout.mp3", true);
+	}
+
 	Model UFO("Assignment1/src/Models/Low_poly_UFO.obj");
 
 	// Implement ImGui
