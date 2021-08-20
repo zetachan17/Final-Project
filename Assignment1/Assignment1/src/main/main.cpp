@@ -729,7 +729,7 @@ int main()
 		//Unnasign the shader
 		glUseProgram(0);
 
-		second = 40 - (int)round(glfwGetTime());
+		second = 68 - (int)round(glfwGetTime());
 
 		if (second <= 0) {
 			second = 0;
@@ -1053,8 +1053,9 @@ void passThrough()
 		rooty = 0.0f;
 		rootz = 5.0f;
 
-		anglex = 0.0f;
-		anglez = 0.0f;
+		anglex = (rand() % 4) * 90;
+		anglez = (rand() % 4) * 90;
+
 		angley = 0.0f;
 		switch (modelRendered)
 		{
