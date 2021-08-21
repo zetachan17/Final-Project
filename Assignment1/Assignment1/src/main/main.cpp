@@ -1054,9 +1054,9 @@ void passThrough()
 		rootz = 5.0f;
 
 		anglex = (rand() % 4) * 90;
-		anglez = (rand() % 4) * 90;
+		angley = (rand() % 4) * 90;
 
-		angley = 0.0f;
+		anglez = 0.0f;
 		switch (modelRendered)
 		{
 		case 0:
