@@ -23,8 +23,8 @@ const float toRadians = 3.14159265 / 180.0f;
 const int numGridLines = 100;
 
 // camera
-Camera camera = Camera(glm::vec3(-6.0f, 4.0f, 7.0f), glm::vec3(0.0f, 1.0f, 0.0f), -40.0f, -20.0f);
-Camera camera2 = Camera(glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, -90.0f);
+Camera camera = Camera(glm::vec3(0.0f, 1.5f, 12.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+Camera camera2 = Camera(glm::vec3(0.0f, -200.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, -90.0f);
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -51,6 +51,7 @@ std::map<GLchar, Character> Characters;
 
 float ambientStrength = 0.3f;
 int second = 0;
+int totalTime = 60;
 int score = 0;
 
 // Texture enumerator
@@ -331,9 +332,15 @@ void CreateAndLoadTextures() {
 }
 
 void RenderScene(int shaderIndex) {
+	//Skybox
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(150.0f, 150.0f, 150.0f));
+	shaderList[0].setMat4("model", model);
+	textureList[Sky].UseTexture();
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	model = identMatrix;
 
 	//Floor
-	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(150.0f, 0.1f, 150.0f));
 	shaderList[0].setMat4("model", model); //you tell shader what matrix should be changed to
 	textureList[Tile].UseTexture();
@@ -729,7 +736,7 @@ int main()
 		//Unnasign the shader
 		glUseProgram(0);
 
-		second = 68 - (int)round(glfwGetTime());
+		second = totalTime - (int)round(glfwGetTime());
 
 		if (second <= 0) {
 			second = 0;
@@ -770,6 +777,10 @@ int main()
 			ImGui::Text("	Paul Grippa Vento");
 			ImGui::Text("	Junting Ye");
 			ImGui::Text("	Runze Zhu");
+			ImGui::Text(" ");
+			ImGui::Text("	Please adjust your settings:");
+			ImGui::SliderFloat("Speed", &movingSpeed, 0.01, 0.05);
+			ImGui::SliderInt("time", &totalTime, 60, 120);
 			ImGui::Text(" ");
 			ImGui::Text("	Press Enter to start the Game");
 			ImGui::End();
