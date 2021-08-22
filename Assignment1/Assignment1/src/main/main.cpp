@@ -728,7 +728,7 @@ int main()
 		}
 		
 		glm::mat4 modelModel = glm::mat4(1.0f);
-		modelModel = glm::translate(modelModel, glm::vec3(0.5f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
+		modelModel = glm::translate(modelModel, glm::vec3(0.5f + sin(glfwGetTime()), 1.0f, 0.0f + cos(glfwGetTime()))); // translate it down so it's at the center of the scene
 		modelModel = glm::scale(modelModel, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
 		shaderList[4].setMat4("model", modelModel);
 		UFO.Draw(shaderList[4]);
@@ -747,7 +747,7 @@ int main()
 			movingSpeed = 0.0f;
 		}
 		switch (currentCamera)
-		{
+		{	
 		case mainCamera:
 			ImGui::Begin("Settings");
 			ImGui::Text("Diffculity");
@@ -810,8 +810,10 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
 		currentCamera = mainCamera;
+	}
+		
 
 	float cameraSpeed = 2.5 * deltaTime;
 
@@ -1056,7 +1058,12 @@ void passThrough()
 {
 	if (isinwall()) {
 		if (check()) {
+			SoundEngine->play2D("Assignment1/src/Music/success.mp3", false);
 			score += 10;
+			movingSpeed += (score / 50) * 0.01;
+		}
+		else {
+			SoundEngine->play2D("Assignment1/src/Music/fail.mp3", false);
 		}
 
 		modelRendered = rand() % 5;
