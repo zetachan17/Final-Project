@@ -1,4 +1,4 @@
-Assignment 2 completed by Team 10
+COMP 371 Final Project completed by Team 10
 Team member:
 Juting Ye 40082557
 Iphigenia Jenna Pappas 40077089
